@@ -24,18 +24,18 @@ impl Default for InputConfig {
             pan_mouse_button: Some(MouseButton::Left),
             pan_wasd_step: None,
             pan_arrow_step: None,
-            reset_key: None,
+            reset_key: Some(KeyCode::R),
         }
     }
 }
 
-// currently assumes that viewport for plane camera is bottom-left aligned and start at (0, 0)!
 pub struct ViewplaneCamera {
     offset: Vec2,
     zoom: f32,
     plane_size: Vec2,
     viewport: Option<Vec2>,
     viewport_ratio: Option<Vec2>,
+    viewport_x_offset: Option<f32>,
     viewport_y_offset: Option<f32>,
     cam: Option<Camera2D>,
     config: InputConfig,
@@ -49,6 +49,7 @@ impl ViewplaneCamera {
             plane_size: Vec2::new(plane_width, plane_height),
             viewport: None,
             viewport_ratio: None,
+            viewport_x_offset: None,
             viewport_y_offset: None,
             cam: None,
             config: InputConfig::default(),
@@ -94,14 +95,14 @@ impl ViewplaneCamera {
 
     // ---- viewport ----
 
-    // NOTE: x offset is currently not supported, viewport is assumed to be left-aligned
-    pub fn set_viewport(&mut self, _x: i32, y: i32, width: i32, height: i32) {
+    pub fn set_viewport(&mut self, x: i32, y: i32, width: i32, height: i32) {
         let viewport = Vec2::new(width as f32, height as f32);
         self.viewport_ratio = Some(Vec2::new(
             viewport.x / screen_width(),
             viewport.y / screen_height(),
         ));
         self.viewport = Some(viewport);
+        self.viewport_x_offset = Some(x as f32);
         self.viewport_y_offset = Some(y as f32);
     }
 
@@ -159,13 +160,14 @@ impl ViewplaneCamera {
         cam.zoom *= self.zoom;
         cam.zoom.y *= -1.0; // Flip Y axis for macroquad 0.4 camera consistency
 
-        // Set viewport position accounting for top offset (e.g. menu bar)
-        let viewport_y_offset = self
-            .viewport_y_offset
-            .expect("viewport y offset not defined");
+        // Set viewport position accounting for offsets (e.g. sidebar, menu bar)
+        // Convert y from top-offset to OpenGL bottom-offset
+        let viewport_x_offset = self.viewport_x_offset.unwrap();
+        let viewport_y_offset = self.viewport_y_offset.unwrap();
+        let opengl_y = screen_height() - viewport_y_offset - viewport.y;
         cam.viewport = Some((
-            0,
-            viewport_y_offset as i32,
+            viewport_x_offset as i32,
+            opengl_y as i32,
             viewport.x as i32,
             viewport.y as i32,
         ));
@@ -196,19 +198,20 @@ impl ViewplaneCamera {
     // ---- input handling ----
 
     fn mouse_in_viewport(&self) -> bool {
-        let cam = match &self.cam {
-            Some(c) => c,
+        let viewport = match &self.viewport {
+            Some(v) => v,
             None => return false,
         };
+        let vp_x = self.viewport_x_offset.unwrap_or(0.0);
+        let vp_y = self.viewport_y_offset.unwrap_or(0.0);
 
-        let (mouse_x, mut mouse_y) = mouse_position();
-        mouse_y = screen_height() - mouse_y; // invert mouse_y, as cameras are flipped D:
+        let (mouse_x, mouse_y) = mouse_position();
 
-        // this assumes that the viewport is bottom_left aligned and starts at (0, 0)!
-        0.0 <= mouse_x
-            && mouse_x <= cam.viewport.unwrap().2 as f32
-            && 0.0 <= mouse_y
-            && mouse_y <= cam.viewport.unwrap().3 as f32
+        // check if mouse is within viewport bounds (screen coordinates, y from top)
+        mouse_x >= vp_x
+            && mouse_x <= vp_x + viewport.x
+            && mouse_y >= vp_y
+            && mouse_y <= vp_y + viewport.y
     }
 
     pub fn handle_inputs(&mut self) {
