@@ -93,7 +93,7 @@ impl ViewplaneCamera {
         self
     }
 
-    // ---- viewport ----
+    // ================== viewport ==================
 
     pub fn set_viewport(&mut self, x: i32, y: i32, width: i32, height: i32) {
         let viewport = Vec2::new(width as f32, height as f32);
@@ -106,7 +106,7 @@ impl ViewplaneCamera {
         self.viewport_y_offset = Some(y as f32);
     }
 
-    // ---- transformations ----
+    // ================== transformations ==================
 
     /// reset camera transformations
     pub fn reset(&mut self) {
@@ -134,13 +134,13 @@ impl ViewplaneCamera {
         self.offset += local_shift / self.zoom;
     }
 
-    // ---- camera application ----
+    // ================== camera application ==================
 
     pub fn apply(&mut self) {
         let viewport = self.viewport.expect("viewport size not defined!");
         let plane_size = self.plane_size;
 
-        // Calculate aspect ratio
+        // calculate aspect ratio
         let viewport_ratio = viewport.x / viewport.y;
         let plane_ratio = plane_size.x / plane_size.y;
         let (cam_width, cam_height) = if viewport_ratio > plane_ratio {
@@ -149,25 +149,23 @@ impl ViewplaneCamera {
             (plane_size.x, plane_size.y * plane_ratio / viewport_ratio)
         };
 
-        // set camera rect
-        let mut cam = Camera2D::from_display_rect(Rect::new(0.0, 0.0, cam_width, cam_height));
-
         // apply user transformations
+        let mut cam = Camera2D::from_display_rect(Rect::new(0.0, 0.0, cam_width, cam_height));
         cam.target = Vec2::new(
             (self.offset.x / cam.zoom.x) + (cam_width / 2.),
+            // flip y for top-left origin
             (-self.offset.y / cam.zoom.y) + (cam_height / 2.),
         );
         cam.zoom *= self.zoom;
-        cam.zoom.y *= -1.0; // Flip Y axis for macroquad 0.4 camera consistency
+        cam.zoom.y *= -1.0; // flip Y for top-left origin 
 
-        // Set viewport position accounting for offsets (e.g. sidebar, menu bar)
-        // Convert y from top-offset to OpenGL bottom-offset
+        // set viewport position accounting for offsets (e.g. sidebar, menu bar)
+        // we need to convert y from top-offset to OpenGL bottom-offset
         let viewport_x_offset = self.viewport_x_offset.unwrap();
-        let viewport_y_offset = self.viewport_y_offset.unwrap();
-        let opengl_y = screen_height() - viewport_y_offset - viewport.y;
+        let viewport_y_offset = screen_height() - self.viewport_y_offset.unwrap() - viewport.y;
         cam.viewport = Some((
             viewport_x_offset as i32,
-            opengl_y as i32,
+            viewport_y_offset as i32,
             viewport.x as i32,
             viewport.y as i32,
         ));
@@ -184,18 +182,24 @@ impl ViewplaneCamera {
         self.cam.as_ref().unwrap()
     }
 
-    // ---- coordinate conversion ----
+    // ================== coordinate conversion ==================
 
     pub fn mouse_plane_pos(&self) -> Vec2 {
         let cam = self.cam.as_ref().expect("macroquad cam not defined");
         let (mouse_x, mouse_y) = mouse_position();
-
-        // cam.viewport already accounts for the top offset, so we pass screen coords directly
-        // screen_to_world() considers the Y flip via cam.zoom.y *= -1.0
         cam.screen_to_world(Vec2::new(mouse_x, mouse_y))
     }
 
-    // ---- input handling ----
+    pub fn mouse_in_plane_view(&self) -> bool {
+        let mouse_plane_pos = self.mouse_plane_pos();
+
+        mouse_plane_pos.x >= 0.0
+            && mouse_plane_pos.y >= 0.0
+            && mouse_plane_pos.x <= self.plane_size.x
+            && mouse_plane_pos.y <= self.plane_size.y
+    }
+
+    // ================== input handling ==================
 
     fn mouse_in_viewport(&self) -> bool {
         let viewport = match &self.viewport {
@@ -207,7 +211,6 @@ impl ViewplaneCamera {
 
         let (mouse_x, mouse_y) = mouse_position();
 
-        // check if mouse is within viewport bounds (screen coordinates, y from top)
         mouse_x >= vp_x
             && mouse_x <= vp_x + viewport.x
             && mouse_y >= vp_y
@@ -279,7 +282,7 @@ impl ViewplaneCamera {
         }
     }
 
-    // ---- debug draws ----
+    // ================== debug draws ==================
 
     pub fn draw_debug(&self) {
         let plane_size = self.plane_size;
