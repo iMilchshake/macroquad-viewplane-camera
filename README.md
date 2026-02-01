@@ -10,13 +10,21 @@ This crate is ideal for building simulations or editor-style applications.
 
 ## Installation
 
-_TODO_
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+macroquad-viewplane-camera = "0.1"
+```
 
 ## Quick Start
 
 Here is a minimal example on how to use this crate. For more details check out `examples/advanced.rs` and `examples/egui.rs`.
 
 ```rust
+use macroquad::prelude::*;
+use macroquad_viewplane_camera::ViewplaneCamera;
+
 #[macroquad::main("minimal")]
 async fn main() {
     // create camera with plane dimensions [100, 100]
