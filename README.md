@@ -1,8 +1,10 @@
 # macroquad-viewplane-camera
 
-Fixed plane 2D rendering for Macroquad's `Camera2D`, ideal for simulations or editor-style applications.
-Rendering is constrained to a dynamically resizable viewport, making it easy to integrate with UI elements such as a sidebar.
-The plane view can be panned and zoomed with no drift.
+Dynamic and easy rendering of a 2D plane using Macroquad's `Camera2D`.
+This crate removes the usual hassle of setting up a robust 2D camera system in Macroquad and lets you focus on building your actual project.
+Draw calls can be performed in a local coordinate space (e.g. a game level) and projected onto the window, handling panning, zooming, window resizing and viewport constraints.
+The view can be constrained to a dynamically resizable viewport inside the window, making it easy to integrate with UI elements such as a sidebar.
+This crate is ideal for building simulations or editor-style applications.
 
 ## Installation
 
