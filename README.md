@@ -6,7 +6,7 @@ Draw calls can be performed in a local coordinate space (e.g. a game level) and 
 The view can be constrained to a dynamically resizable viewport inside the window, making it easy to integrate with UI elements such as a sidebar.
 This crate is ideal for building simulations or editor-style applications.
 
-![Demo](docs/demo.webp)
+![Demo](.github/demo.webp)
 
 ## Installation
 
