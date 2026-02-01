@@ -106,6 +106,10 @@ impl ViewplaneCamera {
         self.viewport_y_offset = Some(y as f32);
     }
 
+    pub fn set_plane(&mut self, plane_width: f32, plane_height: f32) {
+        self.plane_size = Vec2::new(plane_width, plane_height);
+    }
+
     // ================== transformations ==================
 
     /// reset camera transformations

@@ -25,7 +25,7 @@ async fn main() {
     loop {
         clear_background(WHITE);
 
-        // set viewport with 200px sidebare
+        // set viewport with 200px sidebar
         let x_sidebar = screen_width() - 200.;
         vp_cam.set_viewport(0, 0, x_sidebar as i32, screen_height() as i32);
 
@@ -35,8 +35,8 @@ async fn main() {
         // apply camera (sets macroquad camera internally)
         vp_cam.apply();
 
-        // draw in plane coordinates
-        vp_cam.draw_debug();
+        // draw in local plane coordinates, put all your draw calls here
+        vp_cam.draw_debug(); 
 
         // restore default camera for rendering in global screen space (e.g. UI)
         vp_cam.reset_camera();
@@ -79,8 +79,8 @@ let mut vp_cam = ViewplaneCamera::new(100.0, 100.0)
 
 ## Manual Input Handling
 
-The built-in input system can be completely disabled by simply not calling `handle_inputs()`.
-You can use the low-level methods instead for full control:
+The built-in input system can be (temporarily) disabled by simply not calling `handle_inputs()`.
+Also, you can use the low-level methods instead for full control:
 
 ```rust
 // zoom in/out by configured factor
@@ -107,19 +107,14 @@ let plane_pos = vp_cam.mouse_plane_pos();
 
 // access to the underlying `Camera2D`:
 let mq_cam: &Camera2D = vp_cam.get_camera();
+
+// update plane dimensions 
+vp_cam.set_plane(plane_width, plane_height);
 ```
 
-## Viewport Integration
+## `egui` integration
 
-The viewport can be resized dynamically, useful for editor layouts with UI elements such as a sidebar:
-
-```rust
-// leave 200px on the right for a sidebar
-let viewport_width = screen_width() as i32 - 200;
-vp_cam.set_viewport(0, 0, viewport_width, screen_height() as i32);
-```
-
-For egui integration, convert the available rect:
+The viewport can be resized dynamically respecting `egui` UI elements.
 
 ```rust
 // after egui layout
@@ -130,4 +125,9 @@ vp_cam.set_viewport(
     (rect.max.x - rect.min.x) as i32,
     (rect.max.y - rect.min.y) as i32,
 );
+
+// only handle inputs if egui does not use it (e.g. moving egui window)
+if !egui_ctx.wants_pointer_input() {
+    vp_cam.handle_inputs();
+}
 ```
