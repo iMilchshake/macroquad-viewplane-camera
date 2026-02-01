@@ -1,7 +1,7 @@
 [package]
 name = "macroquad-viewplane-camera"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Dynamic and easy rendering of a 2D plane using Macroquad's camera system."
 repository = "https://github.com/iMilchshake/macroquad-viewplane-camera"
