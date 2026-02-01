@@ -3,7 +3,7 @@ use macroquad_viewplane_camera::ViewplaneCamera;
 
 const MARGIN: i32 = 100;
 
-#[macroquad::main("basic")]
+#[macroquad::main("advanced")]
 async fn main() {
     // create camera with plane dimensions [100, 100]
     let mut vp_cam = ViewplaneCamera::new(100.0, 100.0);

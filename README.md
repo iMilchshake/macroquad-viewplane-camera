@@ -1,10 +1,12 @@
 # macroquad-viewplane-camera
 
-Dynamic and easy rendering of a 2D plane using Macroquad's `Camera2D`.
-This crate removes the usual hassle of setting up a robust 2D camera system in Macroquad and lets you focus on building your actual project.
+Dynamic and easy rendering of a 2D plane using Macroquad's camera system.
+This crate removes the hassle of setting up a robust 2D camera system in Macroquad and lets you focus on building your actual project.
 Draw calls can be performed in a local coordinate space (e.g. a game level) and projected onto the window, handling panning, zooming, window resizing and viewport constraints.
 The view can be constrained to a dynamically resizable viewport inside the window, making it easy to integrate with UI elements such as a sidebar.
 This crate is ideal for building simulations or editor-style applications.
+
+![Demo](docs/demo.webp)
 
 ## Installation
 
@@ -12,7 +14,40 @@ _TODO_
 
 ## Quick Start
 
-_TODO_
+Here is a minimal example on how to use this crate. For more details check out `examples/advanced.rs` and `examples/egui.rs`.
+
+```rust
+#[macroquad::main("minimal")]
+async fn main() {
+    // create camera with plane dimensions [100, 100]
+    let mut vp_cam = ViewplaneCamera::new(100.0, 100.0);
+
+    loop {
+        clear_background(WHITE);
+
+        // set viewport with 200px sidebare
+        let x_sidebar = screen_width() - 200.;
+        vp_cam.set_viewport(0, 0, x_sidebar as i32, screen_height() as i32);
+
+        // handle scroll wheel zoom + mouse drag panning
+        vp_cam.handle_inputs();
+
+        // apply camera (sets macroquad camera internally)
+        vp_cam.apply();
+
+        // draw in plane coordinates
+        vp_cam.draw_debug();
+
+        // restore default camera for rendering in global screen space (e.g. UI)
+        vp_cam.reset_camera();
+
+        // draw sidebar/viewport boundary in global space
+        draw_line(x_sidebar, 0.0, x_sidebar, screen_height(), 2.0, BLACK);
+
+        next_frame().await;
+    }
+}
+```
 
 ## Configuration
 
@@ -59,25 +94,24 @@ vp_cam.shift(Vec2::new(dx, dy));
 vp_cam.reset();
 ```
 
-## Coordinate Conversion
-
-Get mouse position in plane coordinates:
+## Utilities
 
 ```rust
+// check if mouse is currently inside plane bounds:
+if vp_cam.mouse_in_plane_view() {
+    // ...
+}
+
+// get mouse position in local plane coordinates:
 let plane_pos = vp_cam.mouse_plane_pos();
-```
 
-## Extracting the Macroquad Camera
-
-When you need access to the underlying `Camera2D`:
-
-```rust
+// access to the underlying `Camera2D`:
 let mq_cam: &Camera2D = vp_cam.get_camera();
 ```
 
 ## Viewport Integration
 
-The viewport can be resized dynamically, useful for editor layouts with sidebars:
+The viewport can be resized dynamically, useful for editor layouts with UI elements such as a sidebar:
 
 ```rust
 // leave 200px on the right for a sidebar
